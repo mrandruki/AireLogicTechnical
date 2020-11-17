@@ -1,6 +1,6 @@
 import requests
 import math
-import matplotlib
+import matplotlib.pyplot as plt
 
 def option_choice(option_type):
 
@@ -8,7 +8,7 @@ def option_choice(option_type):
 
 def get_artist_data(artist_name):
 
-    artist_search_uri = artist_search_end_point + artist_name;
+    artist_search_uri = artist_search_end_point + encode_url(artist_name);
     artist_data = requests.get(artist_search_uri).json(); # Get the atists data from the API and extract json
     artist_number = 1;
 
@@ -39,10 +39,12 @@ def get_artist_recordings(artist_song_id):
 
 def lyrics_call(artist_name, song_name):
 
-    lyrics_song_uri = "https://api.lyrics.ovh/v1/" + artist_name + "/" + song_name
+    lyrics_song_uri = "https://api.lyrics.ovh/v1/" + encode_url(artist_name) + "/" + encode_url(song_name)
     artist_lyrics_json = requests.get(lyrics_song_uri).json(); # Get the artists work from the API and extract json
     return artist_lyrics_json
     
+def encode_url(url):
+    return url.replace("/", " ")
 
 artist_search_end_point = "https://musicbrainz.org/ws/2/artist?fmt=json&query="; # The data for the artist (The end point)
 artist_song_lyric_end_point = "https://api.lyrics.ovh/v1/"
@@ -53,20 +55,21 @@ while repeat.lower() == "y" :
     artist_name = input("Who do you want to look up?: "); # Search for an artist
     artist = get_artist_data(artist_name) # Get the artists' information
 
-##    for key in artist.keys() :
-##        print(artist[key]); 
+    print("");
 
-    # Get works by artist ID then get the top 10 songs by the artist, search if a song is not there
+    # Get works by artist ID then get the top 10 songs by the artist
     artist_songlist = get_artist_works();
     artist_recording_data = [];
     artist_sample_size = int(input("How many tracks would you like?: "));
     counter = 0;
     song_index = 0;
     artist_usable_data = [];
+    
+    print("");
 
     print("Getting song data...")
-    while counter < artist_sample_size and counter < len(artist_songlist["works"]):
-        item = artist_songlist["works"][song_index]
+    while counter < artist_sample_size and song_index < len(artist_songlist["works"]):
+        item = artist_songlist["works"][song_index];
         artist_song_id = item["id"];
         artist_recordings = get_artist_recordings(artist_song_id);
         song_recording_data = [];
@@ -85,19 +88,26 @@ while repeat.lower() == "y" :
             item["average_song_length"] = sum_length / len(song_recording_data);
             usable_data = {"title": item["title"], "lyrics": item["lyrics"], "length": sum_length / len(song_recording_data)};
             artist_usable_data.append(usable_data);
+        if counter >= len(artist_songlist["works"]):
+            continue
             
         song_index += 1;
 
     sum_lyrics = 0;
+    oh_tracker = 0;
     number_of_tracks = len(artist_usable_data);
     
     for item in artist_usable_data:
         new_lyrics = item["lyrics"]["lyrics"].replace("\n", " ");
         new_lyrics = new_lyrics.replace("\r", " ");
         new_lyrics = new_lyrics.replace("  ", " ");
+        oh_meter = new_lyrics.split("oh");
         new_lyrics = new_lyrics.split(" ");
         item["lyric_count"] = len(new_lyrics);
+        item["oh_count"] = len(oh_meter);
         sum_lyrics += item["lyric_count"];
+        oh_tracker += item["oh_count"];
+        
 
     average_lyrics = sum_lyrics / number_of_tracks;
     
@@ -117,10 +127,27 @@ while repeat.lower() == "y" :
 
     print(" ");
     print("The artist statistics are:");
+    print("The amount of oh's within the sample = %d" % (oh_tracker));
     print("Mean lyrics within a song = %3.2f" % (average_lyrics));
     print("Mean in seconds = %3.2f" % (artist_sample_mean));
     print("Variance in seconds = %3.2f" % (artist_sample_variance));
     print("Standard deviation in seconds = %3.2f" % (artist_sample_sd));
+
+    # Doing the charts
+    titles = [usable_data["title"] for usable_data in artist_usable_data]
+    lengths = [usable_data["length"] for usable_data in artist_usable_data]
+    lyrics_amount = [usable_data["lyric_count"] for usable_data in artist_usable_data]
+
+    plt.subplot(121)
+    plt.ylabel('Length (s)')
+    plt.xticks(rotation=45)
+    plt.bar(titles, lengths)
+
+    plt.subplot(122)
+    plt.ylabel('Amount of lyrics in the song')
+    plt.xticks(rotation=45)
+    plt.bar(titles, lyrics_amount)
+    plt.show();
             
     print("");
     repeat = input("Do you want to search again?: ");
