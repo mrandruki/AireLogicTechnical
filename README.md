@@ -8,9 +8,7 @@ This program links with both the Lyrics and Music Brainz APIs to find an artist,
 1. Download a copy of Python 3.8+.
     Python can be downloaded from here: https://www.python.org/downloads/
 
-2. Use pip or a similar installer to download and install the libraries
-    2. requests
-    2. matplotlib
+2. Use pip or a similar installer to download and install the libraries: "requests", "matplotlib".
 
 # How to use the program
 1. Type in the name of an artist or band to search for.
