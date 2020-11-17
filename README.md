@@ -10,6 +10,12 @@ This program links with both the Lyrics and Music Brainz APIs to find an artist,
 
 2. Use pip or a similar installer to download and install the libraries: "**requests**", "**matplotlib**".
 
+3. Run IDLE from the Start menu.
+
+4. Open Aire_Logic_Test.py
+
+5. Click Run -> Run Module. **Or press F5**.
+
 # How to use the program
 1. Type in the name of an artist or band to search for.
 
